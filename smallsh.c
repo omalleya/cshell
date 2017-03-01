@@ -2,14 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #define MAX_COMMAND_LENGTH 40
 
 void runShell();
 void parseCommand(char*);
-void checkCommand(char**, int);
+void checkCommand(char**, int, char*, char*);
 void runCommand(char**);
 void changeDirectory(char**, int);
+int executeShell(char**, char*, char*);
 
 void runShell() {
 
@@ -30,6 +32,8 @@ void parseCommand(char* command)
 {
 	const char s[1] = " ";
 	char* token;
+	char* inputFile = NULL;
+	char* outputFile = NULL;
 	//set to one to add NULL
 	int numArgs = 1;
 	int i=0;
@@ -43,7 +47,23 @@ void parseCommand(char* command)
 	//figure out how many args there are
 	while( token != NULL ) 
 	{
-		numArgs++;
+		if(strcmp(token, "<")==0)
+		{
+			token = strtok(NULL, s);
+			inputFile = malloc(sizeof(char)*strlen(token));
+			strcpy(inputFile,token);
+			inputFile[strcspn(inputFile, "\n")] = 0;
+			
+		}else if(strcmp(token, ">")==0)
+		{
+			token = strtok(NULL, s);
+			outputFile = malloc(sizeof(char)*strlen(token));
+			strcpy(outputFile,token);
+			outputFile[strcspn(outputFile, "\n")] = 0;
+			
+		}else if(token != NULL) {
+			numArgs++;
+		}
 		token = strtok(NULL, s);
 	}
 
@@ -57,58 +77,33 @@ void parseCommand(char* command)
 		strcpy(args[i], token);
 		//removes new line character
 		args[i][strcspn(args[i], "\n")] = 0;
-		printf("args: %s\n", args[i]);
 		token = strtok(NULL, s);
 	}
 	args[numArgs-1] = NULL;
 
 
-	checkCommand(args, numArgs);
+	checkCommand(args, numArgs, inputFile, outputFile);
 }
 
-void checkCommand(char** args, int numArgs)
+void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile)
 {
+	int exitStatus = -5;
 	if(strcmp(args[0],"cd")==0)
 	{
 		changeDirectory(args, numArgs);
 	}else if(strcmp(args[0],"status")==0)
 	{
 		printf("getting status\n");
+		printf("exit value %d\n", exitStatus);
 	}else if(strcmp(args[0],"exit")==0)
 	{
 		printf("exiting\n");
-	}else if(strcmp(args[0],"#")==0)
+	}else if(strcmp(args[0],"#")==0||strcmp(args[0],"")==0)
 	{
 		//comment line so do nothing
 	}else {
 		//exec shell
-		pid_t spawnPid = -5;
-		int childExitStatus = -5;
-		spawnPid = fork();
-		switch (spawnPid) {
-			case -1: { 
-				perror("Hull Breach!\n"); 
-				exit(1); 
-				break; 
-			}
-			case 0: {
-				printf("CHILD(%d): Sleeping for 1 second\n", getpid());
-				sleep(1);
-				printf("CHILD(%d): Converting into \'ls -a\'\n", getpid());
-				execvp(args[0], args);
-				perror("CHILD: exec failure!\n");
-				exit(2); 
-				break;
-			}
-			default: {
-				printf("PARENT(%d): Sleeping for 2 seconds\n", getpid());
-				sleep(2);
-				printf("PARENT(%d): Wait()ing for child(%d) to terminate\n", getpid(), spawnPid);
-				pid_t actualPid = waitpid(spawnPid, &childExitStatus, 0);
-				printf("PARENT(%d): Child(%d) terminated, Exiting!\n", getpid(), actualPid);
-				exit(0); break;
-			}
-		}
+		exitStatus = executeShell(args, inputFile, outputFile);
 	}
 }
 
@@ -133,6 +128,64 @@ void changeDirectory(char** args, int numArgs)
 		getcwd(currentDir, sizeof(currentDir));
 		printf("%s\n", currentDir);
 	}
+}
+
+int executeShell(char** args, char* inputFile, char* outputFile)
+{
+	pid_t spawnPid = -5;
+	int childExitStatus = -5;
+	spawnPid = fork();
+	switch (spawnPid) {
+		case -1: { 
+			perror("Hull Breach!\n"); 
+			exit(1); 
+			break; 
+		}
+		case 0: {
+			//necessary redirection
+			int sourceFD, targetFD, result;
+			if(inputFile!=NULL)
+			{
+				sourceFD = open(inputFile, O_RDONLY);
+				if (sourceFD == -1) { perror("source open()"); exit(1); }
+				printf("sourceFD == %d\n", sourceFD); // Written to terminal
+				result = dup2(sourceFD, 0);
+				if (result == -1) { perror("source dup2()"); exit(2); }
+				fcntl(sourceFD, F_SETFD, FD_CLOEXEC);
+			}
+
+			if(outputFile!=NULL)
+			{
+				targetFD = open(outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+				if (targetFD == -1) { perror("target open()"); exit(1); }
+				printf("targetFD == %d\n", targetFD); // Written to terminal
+				result = dup2(targetFD, 1);
+				if (result == -1) { perror("target dup2()"); exit(2); }
+				fcntl(targetFD, F_SETFD, FD_CLOEXEC);
+			}
+
+			execvp(args[0], args);
+
+			perror("CHILD: exec failure!\n");
+			exit(2); 
+			break;
+		}
+		default: {
+			printf("PARENT(%d): Wait()ing for child(%d) to terminate\n", getpid(), spawnPid);
+			pid_t actualPid = waitpid(spawnPid, &childExitStatus, 0);
+
+			//get exit status
+			if(WIFEXITED(childExitStatus))
+				printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
+			else
+				printf("Child did not terminate with exit\n");
+			
+			printf("PARENT(%d): Child(%d) terminated.\n", getpid(), actualPid);
+			break;
+		}
+	}
+
+	return childExitStatus;
 }
 
 int main() {
