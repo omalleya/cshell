@@ -4,10 +4,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <limits.h>
 
 #define MAX_COMMAND_LENGTH 40
 #define MAX_PIDS         1000 // maximum PIDs to track
 
+int signalNum = 0;
+pid_t fgpid = INT_MAX;
 pid_t bgpid[MAX_PIDS];         // array of open background process IDs
 pid_t completed_pid[MAX_PIDS]; // array of completed bg process IDs
 int cur=0;
@@ -19,6 +22,16 @@ void runCommand(char**);
 void changeDirectory(char**, int);
 int executeShell(char**, char*, char*, int, int);
 void checkBg();
+
+// create instance of sigaction struct for background processes
+struct sigaction background_act;
+
+// create instance of sigaction struct for foreground processes
+struct sigaction foreground_act;
+
+// create sigaction struct to ignore interrupts the rest of the time
+struct sigaction restOfTheTime_act;
+
 
 void checkBg()
 {
@@ -244,7 +257,26 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 		default: {
 			if(background == 0)
 			{
-				pid_t actualPid = waitpid(spawnPid, &childExitStatus, 0);
+				//pid_t actualPid = waitpid(spawnPid, &childExitStatus, 0);
+				signalNum = 0;
+				fgpid = spawnPid;
+
+				// set interrupt handler for fg process 
+                sigaction(SIGINT, &foreground_act, NULL);
+
+				// wait for fg child process
+                fgpid = waitpid(fgpid, &childExitStatus, 0);
+
+				// restore to ignore interrupts
+                sigaction(SIGINT, &restOfTheTime_act, NULL);
+
+				fgpid = INT_MAX;
+
+				// if process was terminated by signal, print message
+				if (signalNum != 0)
+				{
+					printf("terminated by signal %d\n", signalNum);
+				}
 
 			}else{
 				pid_t childPID = waitpid(childPID, &childExitStatus, WNOHANG);
@@ -267,7 +299,62 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 	return childExitStatus;
 }
 
+void bgHandler(int sig, siginfo_t* info, void* vp)
+{
+    pid_t ref_pid = info->si_pid;
+	int i=0; 
+
+    // if signal is not from fg process, process it here
+    if (ref_pid != fgpid)
+    {
+		for(i=0;i<cur;i++)
+		{
+			if(bgpid[i] == ref_pid)
+			{
+				printf("test\n");
+			}
+		}
+    } 
+
+    return;
+}
+
+
+
+void sigintHandler()
+{
+    // if interrupt signal occurs while fg process is running, kill it
+    if (fgpid != INT_MAX)
+    {
+        // kill the foreground process
+        kill(fgpid, SIGKILL);
+ 
+        // set global variable for status messages
+        signalNum = 2;  
+    }  
+
+    // ignore interrupt signal for all other processes
+    // and simply return
+    return;
+}
+
 int main() {
+
+	background_act.sa_sigaction = bgHandler;     
+	background_act.sa_flags = SA_SIGINFO|SA_RESTART;
+	sigfillset(&(background_act.sa_mask));
+	// set up signal handler for completed child process
+	sigaction(SIGCHLD, &background_act, NULL);
+
+	foreground_act.sa_handler = sigintHandler;
+	foreground_act.sa_flags = SA_RESTART;
+	sigfillset(&(foreground_act.sa_mask));
+	sigaction(SIGINT, &foreground_act, NULL); 
+
+	restOfTheTime_act.sa_handler = SIG_IGN;
+	restOfTheTime_act.sa_flags = SA_RESTART;
+	sigfillset(&(restOfTheTime_act.sa_mask));
+	sigaction(SIGINT, &restOfTheTime_act, NULL); 
 
 	runShell();	
 	return 0;
