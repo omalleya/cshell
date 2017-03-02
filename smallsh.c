@@ -41,7 +41,7 @@ void checkBg()
 			else
 				printf("Child did not terminate with exit\n");
 
-			bgpid[i] = -5;
+			//bgpid[i] = -5;
 		}
 	}
 }
@@ -215,8 +215,6 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 			{
 				sourceFD = open(inputFile, O_RDONLY);
 				if (sourceFD == -1) { perror("source open()"); exit(1); }
-				printf("sourceFD == %d\n", sourceFD); // Written to terminal
-				fflush(stdout);
 				result = dup2(sourceFD, 0);
 				if (result == -1) { perror("source dup2()"); exit(2); }
 				fcntl(sourceFD, F_SETFD, FD_CLOEXEC);
@@ -226,8 +224,6 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 			{
 				targetFD = open(outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0744);
 				if (targetFD == -1) { perror("target open()"); exit(1); }
-				printf("targetFD == %d\n", targetFD); // Written to terminal
-				fflush(stdout);
 				result = dup2(targetFD, 1);
 				if (result == -1) { perror("target dup2()"); exit(2); }
 				fcntl(targetFD, F_SETFD, FD_CLOEXEC);
