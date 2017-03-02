@@ -148,8 +148,8 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		changeDirectory(args, numArgs);
 	}else if(strcmp(args[0],"status")==0)
 	{
-		printf("getting status\n");
 		printf("exit value %d\n", *exitStatus);
+		fflush(stdout);
 	}else if(strcmp(args[0],"exit")==0)
 	{
 		int i=0;
@@ -176,22 +176,24 @@ void changeDirectory(char** args, int numArgs)
 {
 	char currentDir[100];
 
-	printf("changing directory\n");
 	if(numArgs > 2)
 	{
 		if(chdir(args[1]) == -1)
 		{
 			printf("Couldn't change directory.\n");
+			fflush(stdout);
 		}else {
 			printf("Changed directory to: %s\n", args[1]);
 			getcwd(currentDir, sizeof(currentDir));
 			printf("%s\n", currentDir);
+			fflush(stdout);
 		}
 	}else {
 		//go to home directory
 		chdir(getenv("HOME"));
 		getcwd(currentDir, sizeof(currentDir));
 		printf("%s\n", currentDir);
+		fflush(stdout);
 	}
 }
 
@@ -214,6 +216,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 				sourceFD = open(inputFile, O_RDONLY);
 				if (sourceFD == -1) { perror("source open()"); exit(1); }
 				printf("sourceFD == %d\n", sourceFD); // Written to terminal
+				fflush(stdout);
 				result = dup2(sourceFD, 0);
 				if (result == -1) { perror("source dup2()"); exit(2); }
 				fcntl(sourceFD, F_SETFD, FD_CLOEXEC);
@@ -224,6 +227,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 				targetFD = open(outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0744);
 				if (targetFD == -1) { perror("target open()"); exit(1); }
 				printf("targetFD == %d\n", targetFD); // Written to terminal
+				fflush(stdout);
 				result = dup2(targetFD, 1);
 				if (result == -1) { perror("target dup2()"); exit(2); }
 				fcntl(targetFD, F_SETFD, FD_CLOEXEC);
@@ -249,6 +253,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 					printf("Child did not terminate with exit\n");
 				
 				printf("PARENT(%d): Child(%d) terminated.\n", getpid(), actualPid);
+				fflush(stdout);
 			}else{
 				pid_t childPID = waitpid(childPID, &childExitStatus, WNOHANG);
 				bgpid[cur++] = childPID;
