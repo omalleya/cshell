@@ -89,7 +89,7 @@ void parseCommand(char* command, int* exitStatus)
 
 	char strC[40];
 	int n;
-	char* strTemp;
+	char strTemp[15];
 
 	//replaces $$ with pid
 	for(i=0; i<strlen(command)-1; i++)
