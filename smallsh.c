@@ -109,7 +109,7 @@ void parseCommand(char* command, int* exitStatus)
 			strcpy(outputFile,token);
 			outputFile[strcspn(outputFile, "\n")] = 0;
 			
-		}else if(strcmp(token, "&\n")==0)
+		}else if(strcmp(token, "&\n")==0 && fgOnly==0)
 		{
 			token = strtok(NULL, s);
 			//sets background variable to true
@@ -338,7 +338,7 @@ int main() {
 	stopFg_act.sa_handler = fgHandler;
 	stopFg_act.sa_flags = SA_RESTART;
 	sigfillset(&(stopFg_act.sa_mask));
-	sigaction(SIGUSR2, &stopFg_act, NULL);
+	sigaction(SIGTSTP, &stopFg_act, NULL);
 
 	foreground_act.sa_handler = sigintHandler;
 	foreground_act.sa_flags = SA_RESTART;
