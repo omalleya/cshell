@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #define MAX_COMMAND_LENGTH 40
 #define MAX_PIDS         1000 // maximum PIDs to track
