@@ -7,28 +7,29 @@
 #define MAX_COMMAND_LENGTH 40
 
 void runShell();
-void parseCommand(char*);
-void checkCommand(char**, int, char*, char*);
+void parseCommand(char*, int*);
+void checkCommand(char**, int, char*, char*, int*, int);
 void runCommand(char**);
 void changeDirectory(char**, int);
-int executeShell(char**, char*, char*);
+int executeShell(char**, char*, char*, int);
 
 void runShell() {
 
 	char* command = malloc(sizeof(char)*MAX_COMMAND_LENGTH);
+	int exitStatus = -5;
 
 	do {
 		printf(": ");
 		fflush(stdout);
 		fgets(command, MAX_COMMAND_LENGTH, stdin);
 
-		//check command for proper functionality
-		parseCommand(command);
+		//parses command and then checks command for proper functionality
+		parseCommand(command, &exitStatus);
 
 	}while(strcmp(command, "exit\n") != 0);
 }
 
-void parseCommand(char* command)
+void parseCommand(char* command, int* exitStatus)
 {
 	const char s[1] = " ";
 	char* token;
@@ -37,6 +38,7 @@ void parseCommand(char* command)
 	//set to one to add NULL
 	int numArgs = 1;
 	int i=0;
+	int background=0;
 
 	//need to copy command because strtok edits command string
 	char* temp = malloc(sizeof(char)*strlen(command));
@@ -61,6 +63,12 @@ void parseCommand(char* command)
 			strcpy(outputFile,token);
 			outputFile[strcspn(outputFile, "\n")] = 0;
 			
+		}else if(strcmp(token, "&\n")==0)
+		{
+			token = strtok(NULL, s);
+			//sets background variable to true
+			background=1;
+			
 		}else if(token != NULL) {
 			numArgs++;
 		}
@@ -82,19 +90,18 @@ void parseCommand(char* command)
 	args[numArgs-1] = NULL;
 
 
-	checkCommand(args, numArgs, inputFile, outputFile);
+	checkCommand(args, numArgs, inputFile, outputFile, exitStatus, background);
 }
 
-void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile)
+void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, int* exitStatus, int background)
 {
-	int exitStatus = -5;
 	if(strcmp(args[0],"cd")==0)
 	{
 		changeDirectory(args, numArgs);
 	}else if(strcmp(args[0],"status")==0)
 	{
 		printf("getting status\n");
-		printf("exit value %d\n", exitStatus);
+		printf("exit value %d\n", *exitStatus);
 	}else if(strcmp(args[0],"exit")==0)
 	{
 		printf("exiting\n");
@@ -103,7 +110,7 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile)
 		//comment line so do nothing
 	}else {
 		//exec shell
-		exitStatus = executeShell(args, inputFile, outputFile);
+		*exitStatus = executeShell(args, inputFile, outputFile, background);
 	}
 }
 
@@ -130,7 +137,7 @@ void changeDirectory(char** args, int numArgs)
 	}
 }
 
-int executeShell(char** args, char* inputFile, char* outputFile)
+int executeShell(char** args, char* inputFile, char* outputFile, int background)
 {
 	pid_t spawnPid = -5;
 	int childExitStatus = -5;
@@ -172,16 +179,30 @@ int executeShell(char** args, char* inputFile, char* outputFile)
 		}
 		default: {
 			printf("PARENT(%d): Wait()ing for child(%d) to terminate\n", getpid(), spawnPid);
-			pid_t actualPid = waitpid(spawnPid, &childExitStatus, 0);
+			if(background == 0)
+			{
+				pid_t actualPid = waitpid(spawnPid, &childExitStatus, 0);
+				//get exit status
+				if(WIFEXITED(childExitStatus))
+					printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
+				else
+					printf("Child did not terminate with exit\n");
+				
+				printf("PARENT(%d): Child(%d) terminated.\n", getpid(), actualPid);
+				break;
+			}else{
+				pid_t childPID = waitpid(-1, &childExitStatus, WNOHANG);
+				//get exit status
+				if(WIFEXITED(childExitStatus))
+					printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
+				else
+					printf("Child did not terminate with exit\n");
+				
+				printf("PARENT(%d): Child(%d) terminated.\n", getpid(), childPID);
+				break;
+			}
 
-			//get exit status
-			if(WIFEXITED(childExitStatus))
-				printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
-			else
-				printf("Child did not terminate with exit\n");
 			
-			printf("PARENT(%d): Child(%d) terminated.\n", getpid(), actualPid);
-			break;
 		}
 	}
 
@@ -192,4 +213,5 @@ int main() {
 
 	runShell();	
 	return 0;
+
 }
