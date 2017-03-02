@@ -134,6 +134,8 @@ void parseCommand(char* command, int* exitStatus)
 		}else if(token != NULL) {
 			numArgs++;
 		}
+
+		printf("Token: %s\n", token);
 		token = strtok(NULL, s);
 	}
 	printf("line 139\n");
@@ -146,8 +148,16 @@ void parseCommand(char* command, int* exitStatus)
 	token = strtok(command, s);
 	for(i=0; i<numArgs-1; i++)
 	{
+		if(token==NULL)
+		{
+			continue;
+		}
 		args[i] = malloc(sizeof(char)*strlen(token));
+		printf("args[%d]: %s\n",i, args[i]);
+		printf("Token: %s\n", token);
 		strcpy(args[i], token);
+		printf("args[%d]: %s\n",i,args[i]);
+		printf("numArgs: %d\n", numArgs);
 		printf("line 151\n");
 		//removes new line character
 		args[i][strcspn(args[i], "\n")] = 0;
