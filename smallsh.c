@@ -96,19 +96,19 @@ void parseCommand(char* command, int* exitStatus)
 	args[numArgs-1] = NULL;
 
 	//set input and output files for background process
-	if(background==1)
-	{
-		if(inputFile==NULL)
-		{
-			inputFile = malloc(sizeof(char)*12);
-			strcpy(inputFile, "/dev/null");
-		}
-		if(outputFile==NULL)
-		{
-			outputFile = malloc(sizeof(char)*12);
-			strcpy(outputFile, "/dev/null");
-		}
-	}
+	// if(background==1)
+	// {
+	// 	if(inputFile==NULL)
+	// 	{
+	// 		inputFile = malloc(sizeof(char)*12);
+	// 		strcpy(inputFile, "/dev/null");
+	// 	}
+	// 	if(outputFile==NULL)
+	// 	{
+	// 		outputFile = malloc(sizeof(char)*12);
+	// 		strcpy(outputFile, "/dev/null");
+	// 	}
+	// }
 
 
 	checkCommand(args, numArgs, inputFile, outputFile, exitStatus, background);
