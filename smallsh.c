@@ -32,7 +32,7 @@ void checkBg()
 			printf("Process %d still going\n", bgpid[i]);
 		}else{
 			if(WIFEXITED(childExitStatus))
-				printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
+				printf("background pid %d is done: exit value %d\n", bgpid[i], WEXITSTATUS(childExitStatus));
 			else if (WIFSIGNALED(childExitStatus))
 				printf("The process was terminated by a signal %d\n",  WTERMSIG(childExitStatus));
 			else
@@ -249,7 +249,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 			}else{
 				pid_t childPID = waitpid(childPID, &childExitStatus, WNOHANG);
 				bgpid[cur++] = childPID;
-				printf("background pid is %d\n", bgpid[cur]);
+				printf("background pid is %d\n", spawnPid);
 			}
 
 			checkBg();
