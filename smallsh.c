@@ -181,7 +181,7 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		}
 
 		exit(0);
-	}else if(strcmp(args[0],"#")==0||strcmp(args[0],"")==0)
+	}else if(args[0][0] == '#'||strcmp(args[0],"")==0)
 	{
 		//comment line so do nothing
 	}else {
@@ -250,8 +250,6 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 			}
 
 			execvp(args[0], args);
-
-			perror("CHILD: exec failure!\n");
 			exit(2); 
 			break;
 		}
