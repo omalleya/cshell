@@ -29,10 +29,7 @@ void checkBg()
 		bgpid[i] = waitpid(bgpid[i], &childExitStatus, WNOHANG);
 		if(bgpid[i] == 0)
 		{
-			printf("Process still going\n");
-		}else if(bgpid[i] == -5)
-		{
-			//nothing
+			printf("Process %d still going\n", bgpid[i]);
 		}else{
 			if(WIFEXITED(childExitStatus))
 				printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
@@ -41,7 +38,6 @@ void checkBg()
 			else
 				printf("Child did not terminate with exit\n");
 
-			//bgpid[i] = -5;
 		}
 	}
 }
@@ -253,6 +249,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 			}else{
 				pid_t childPID = waitpid(childPID, &childExitStatus, WNOHANG);
 				bgpid[cur++] = childPID;
+				printf("background pid is %d\n", bgpid[cur]);
 			}
 
 			checkBg();
