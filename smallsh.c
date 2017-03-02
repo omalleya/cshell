@@ -25,13 +25,13 @@ int executeShell(char**, char*, char*, int, int);
 void checkBg();
 
 // create instance of sigaction struct for background processes
-struct sigaction background_act;
+struct sigaction stopFg_act = {0};
 
 // create instance of sigaction struct for foreground processes
-struct sigaction foreground_act;
+struct sigaction foreground_act = {0};
 
 // create sigaction struct to ignore interrupts the rest of the time
-struct sigaction restOfTheTime_act;
+struct sigaction restOfTheTime_act = {0};
 
 
 void checkBg()
@@ -300,7 +300,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 	return childExitStatus;
 }
 
-void bgHandler()
+void fgHandler()
 {
 
 	if(fgOnly == 0)
@@ -337,10 +337,10 @@ void sigintHandler()
 
 int main() {
 
-	background_act.sa_handler = sigintHandler;
-	background_act.sa_flags = SA_RESTART;
-	sigfillset(&(background_act.sa_mask));
-	sigaction(SIGSTOP, &background_act, NULL);
+	stopFg_act.sa_handler = fgHandler;
+	stopFg_act.sa_flags = SA_RESTART;
+	sigfillset(&(stopFg_act.sa_mask));
+	sigaction(SIGUSR2, &stopFg_act, NULL);
 
 	foreground_act.sa_handler = sigintHandler;
 	foreground_act.sa_flags = SA_RESTART;
