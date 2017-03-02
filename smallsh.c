@@ -87,6 +87,27 @@ void parseCommand(char* command, int* exitStatus)
 	int i=0;
 	int background=0;
 
+	char strC[40];
+	int n;
+	char* strTemp;
+
+	//replaces $$ with pid
+	for(i=0; i<strlen(command)-1; i++)
+	{
+		if(command[i]=='$'&& command[i+1]=='$')
+		{
+			strncpy(strC,command,i);
+			strC[i] = '\0';
+			n = sprintf(strTemp, "%ld", (long)getpid());
+			strcat(strC, strTemp);
+			strcat(strC,command+(i+2));
+			printf("%s\n",strC);
+			strcpy(command, strC);
+		}
+	}
+
+	
+
 	//need to copy command because strtok edits command string
 	char* temp = malloc(sizeof(char)*strlen(command));
 	strcpy(temp, command);
@@ -310,10 +331,10 @@ void fgHandler()
 
 	if(fgOnly == 0)
 	{
-		printf("Entering foreground-only mode (& is now ignored)\n");
+		puts("Entering foreground-only mode (& is now ignored)\n");
 		fgOnly = 1;
 	}else {
-		printf("Exiting foreground-only mode\n");
+		puts("Exiting foreground-only mode\n");
 		fgOnly = 0;
 	}
 
@@ -327,7 +348,7 @@ void sigintHandler()
     // if interrupt signal occurs while fg process is running, kill it
     if (fgpid != INT_MAX)
     {
-		printf("%d\n", fgpid);	
+		//printf("%d\n", fgpid);	
         // kill the foreground process
         kill(fgpid, SIGKILL);
  
