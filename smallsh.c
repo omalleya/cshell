@@ -18,6 +18,28 @@ void checkCommand(char**, int, char*, char*, int*, int);
 void runCommand(char**);
 void changeDirectory(char**, int);
 int executeShell(char**, char*, char*, int);
+void checkBg();
+
+void checkBg()
+{
+	int i=0;
+	int childExitStatus=-5;
+	for(i=0; i<cur; i++)
+	{
+		bgpid[i] = waitpid(bgpid[i], &childExitStatus, WNOHANG);
+		if(bgpid[i] == 0)
+		{
+			printf("Process still going\n");
+		}else{
+			if(WIFEXITED(childExitStatus))
+				printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
+			else if (WIFSIGNALED(childExitStatus))
+				printf("The process was terminated by a signal %d\n",  WTERMSIG(childExitStatus));
+			else
+				printf("Child did not terminate with exit\n");
+		}
+	}
+}
 
 void runShell() {
 
@@ -216,23 +238,19 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 				//get exit status
 				if(WIFEXITED(childExitStatus))
 					printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
+				else if (WIFSIGNALED(childExitStatus))
+					printf("The process was terminated by a signal %d\n",  WTERMSIG(childExitStatus));
 				else
 					printf("Child did not terminate with exit\n");
 				
 				printf("PARENT(%d): Child(%d) terminated.\n", getpid(), actualPid);
-				break;
 			}else{
 				pid_t childPID = waitpid(childPID, &childExitStatus, WNOHANG);
 				bgpid[cur++] = childPID;
-				//get exit status
-				if(WIFEXITED(childExitStatus))
-					printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
-				else
-					printf("Child did not terminate with exit\n");
-				
-				printf("PARENT(%d): Child(%d) terminated.\n", getpid(), childPID);
-				break;
 			}
+
+			checkBg();
+			break;
 
 			
 		}
