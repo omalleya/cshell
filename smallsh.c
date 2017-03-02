@@ -30,7 +30,7 @@ void checkBg()
 		//if process is done
 		if(bgpid[i] == -1)
 		{
-			//done
+			//pid has already finished and outputted it's exit status
 		}else if(bgpid[i] != 0)
 		{
 			if(WIFEXITED(childExitStatus))
@@ -56,6 +56,7 @@ void runShell() {
 
 		//parses command and then checks command for proper functionality
 		parseCommand(command, &exitStatus);
+		checkBg();
 
 	}while(strcmp(command, "exit\n") != 0);
 }
@@ -237,23 +238,12 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 			if(background == 0)
 			{
 				pid_t actualPid = waitpid(spawnPid, &childExitStatus, 0);
-				//get exit status
-				// if(WIFEXITED(childExitStatus))
-				// 	printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
-				// else if (WIFSIGNALED(childExitStatus))
-				// 	printf("The process was terminated by a signal %d\n",  WTERMSIG(childExitStatus));
-				// else
-				// 	printf("Child did not terminate with exit\n");
-				
-				// printf("PARENT(%d): Child(%d) terminated.\n", getpid(), actualPid);
-				// fflush(stdout);
+
 			}else{
 				pid_t childPID = waitpid(childPID, &childExitStatus, WNOHANG);
 				bgpid[cur++] = childPID;
 				printf("background pid is %d\n", spawnPid);
 			}
-
-			checkBg();
 			break;
 
 			
