@@ -154,7 +154,10 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		int i=0;
 		for(i=0; i<cur; i++)
 		{
-			kill(bgpid[i], SIGKILL);
+			if(bgpid[i] != -1 && bgpid[i] != 0)
+			{
+				kill(bgpid[i], SIGKILL);
+			}
 		}
 		for(i=0; i<numArgs; i++)
 		{
@@ -249,6 +252,12 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 			
 		}
 	}
+
+	for(i=0; i<numArgs; i++)
+	{
+		free(args[i]);
+	}
+	free(args);
 
 	return childExitStatus;
 }
