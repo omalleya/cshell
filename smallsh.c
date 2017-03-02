@@ -115,6 +115,10 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		{
 			kill(bgpid[i], SIGKILL);
 		}
+		for(i=0; i<numArgs; i++)
+		{
+			free(args[i]);
+		}
 
 		exit(0);
 	}else if(strcmp(args[0],"#")==0||strcmp(args[0],"")==0)
@@ -203,7 +207,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 				printf("PARENT(%d): Child(%d) terminated.\n", getpid(), actualPid);
 				break;
 			}else{
-				pid_t childPID = waitpid(-1, &childExitStatus, WNOHANG);
+				pid_t childPID = waitpid(childPID, &childExitStatus, WNOHANG);
 				bgpid[cur++] = childPID;
 				//get exit status
 				if(WIFEXITED(childExitStatus))
