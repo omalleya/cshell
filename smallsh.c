@@ -109,11 +109,14 @@ void parseCommand(char* command, int* exitStatus)
 			strcpy(outputFile,token);
 			outputFile[strcspn(outputFile, "\n")] = 0;
 			
-		}else if(strcmp(token, "&\n")==0 && fgOnly==0)
+		}else if(strcmp(token, "&\n")==0)
 		{
 			token = strtok(NULL, s);
 			//sets background variable to true
-			background=1;
+			if(fgOnly == 0)
+			{
+				background=1;
+			}
 			
 		}else if(token != NULL) {
 			numArgs++;
