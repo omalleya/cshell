@@ -5,6 +5,11 @@
 #include <fcntl.h>
 
 #define MAX_COMMAND_LENGTH 40
+#define MAX_PIDS         1000 // maximum PIDs to track
+
+pid_t bgpid[MAX_PIDS];         // array of open background process IDs
+pid_t completed_pid[MAX_PIDS]; // array of completed bg process IDs
+int cur=0;
 
 void runShell();
 void parseCommand(char*, int*);
@@ -104,7 +109,13 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		printf("exit value %d\n", *exitStatus);
 	}else if(strcmp(args[0],"exit")==0)
 	{
-		printf("exiting\n");
+		int i=0;
+		for(i=0; i<cur; i++)
+		{
+			kill(bgpid[i], SIGKILL);
+		}
+
+		exit(0);
 	}else if(strcmp(args[0],"#")==0||strcmp(args[0],"")==0)
 	{
 		//comment line so do nothing
@@ -192,6 +203,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 				break;
 			}else{
 				pid_t childPID = waitpid(-1, &childExitStatus, WNOHANG);
+				bgpid[cur++] = childPID;
 				//get exit status
 				if(WIFEXITED(childExitStatus))
 					printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
