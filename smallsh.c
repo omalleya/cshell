@@ -96,21 +96,13 @@ void parseCommand(char* command, int* exitStatus)
 	{
 		if(command[i]=='$'&& command[i+1]=='$')
 		{
-			printf("test 99\n");
 			strncpy(strC,command,i);
-			printf("test 101\n");
 			strC[i] = '\0';
-			printf("test 103\n");
 			n = sprintf(strTemp, "%ld", (long)getpid());
-			printf("test 105\n");
 			strcat(strC, strTemp);
-			printf("test 107\n");
 			strcat(strC,command+(i+2));
-			printf("test 109\n");
 			printf("%s\n",strC);
-			printf("test 111\n");
 			strcpy(command, strC);
-			printf("test 113\n");
 		}
 	}
 
