@@ -28,7 +28,10 @@ void checkBg()
 		int childExitStatus=-5;
 		bgpid[i] = waitpid(bgpid[i], &childExitStatus, WNOHANG);
 		//if process is done
-		if(bgpid[i] != 0)
+		if(bgpid[i] == -1)
+		{
+			//done
+		}else if(bgpid[i] != 0)
 		{
 			if(WIFEXITED(childExitStatus))
 				printf("background pid %d is done: exit value %d\n", bgpid[i], WEXITSTATUS(childExitStatus));
