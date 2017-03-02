@@ -23,13 +23,16 @@ void checkBg();
 void checkBg()
 {
 	int i=0;
-	int childExitStatus=-5;
 	for(i=0; i<cur; i++)
 	{
+		int childExitStatus=-5;
 		bgpid[i] = waitpid(bgpid[i], &childExitStatus, WNOHANG);
 		if(bgpid[i] == 0)
 		{
 			printf("Process still going\n");
+		}else if(bgpid[i] == -5)
+		{
+			//nothing
 		}else{
 			if(WIFEXITED(childExitStatus))
 				printf("Child's exit code %d\n", WEXITSTATUS(childExitStatus));
@@ -37,6 +40,8 @@ void checkBg()
 				printf("The process was terminated by a signal %d\n",  WTERMSIG(childExitStatus));
 			else
 				printf("Child did not terminate with exit\n");
+
+			bgpid[i] = -5;
 		}
 	}
 }
