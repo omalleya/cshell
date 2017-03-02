@@ -148,6 +148,7 @@ void parseCommand(char* command, int* exitStatus)
 	{
 		args[i] = malloc(sizeof(char)*strlen(token));
 		strcpy(args[i], token);
+		printf("line 151\n");
 		//removes new line character
 		args[i][strcspn(args[i], "\n")] = 0;
 		token = strtok(NULL, s);
