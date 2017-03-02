@@ -107,6 +107,8 @@ void parseCommand(char* command, int* exitStatus)
 		token = strtok(NULL, s);
 	}
 
+	free(temp);
+
 	//create args array with size figured out in while loop
 	char **args = (char**) malloc((numArgs)*sizeof(char*));
 
@@ -154,7 +156,7 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		int i=0;
 		for(i=0; i<cur; i++)
 		{
-			if(bgpid[i] != -1 && bgpid[i] != 0)
+			if(bgpid[i] == 0)
 			{
 				kill(bgpid[i], SIGKILL);
 			}
@@ -172,6 +174,8 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		//exec shell
 		*exitStatus = executeShell(args, inputFile, outputFile, numArgs, background);
 	}
+	free(inputFile);
+	free(outputFile);
 }
 
 void changeDirectory(char** args, int numArgs)
