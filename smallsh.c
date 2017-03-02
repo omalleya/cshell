@@ -61,6 +61,7 @@ void checkBg()
 void runShell() {
 
 	char* command = malloc(sizeof(char)*MAX_COMMAND_LENGTH);
+	memset(command, '\0', MAX_COMMAND_LENGTH);
 	int exitStatus = -5;
 
 	do {
