@@ -14,6 +14,7 @@ pid_t fgpid = INT_MAX;
 pid_t bgpid[MAX_PIDS];         // array of open background process IDs
 pid_t completed_pid[MAX_PIDS]; // array of completed bg process IDs
 int cur=0;
+int fgOnly = 0;
 
 void runShell();
 void parseCommand(char*, int*);
@@ -299,22 +300,17 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 	return childExitStatus;
 }
 
-void bgHandler(int sig, siginfo_t* info, void* vp)
+void bgHandler()
 {
-    pid_t ref_pid = info->si_pid;
-	int i=0; 
 
-    // if signal is not from fg process, process it here
-    if (ref_pid != fgpid)
-    {
-		for(i=0;i<cur;i++)
-		{
-			if(bgpid[i] == ref_pid)
-			{
-				printf("test\n");
-			}
-		}
-    } 
+	if(fgOnly == 0)
+	{
+		printf("Entering foreground-only mode (& is now ignored)\n");
+		fgOnly = 1;
+	}else {
+		printf("Exiting foreground-only mode\n");
+		fgOnly = 0;
+	}
 
     return;
 }
@@ -326,7 +322,7 @@ void sigintHandler()
     // if interrupt signal occurs while fg process is running, kill it
     if (fgpid != INT_MAX)
     {
-	printf("%d\n", fgpid);	
+		printf("%d\n", fgpid);	
         // kill the foreground process
         kill(fgpid, SIGKILL);
  
@@ -341,10 +337,9 @@ void sigintHandler()
 
 int main() {
 
-	background_act.sa_sigaction = bgHandler;     
-	background_act.sa_flags = SA_SIGINFO|SA_RESTART;
+	background_act.sa_handler = sigintHandler;
+	background_act.sa_flags = SA_RESTART;
 	sigfillset(&(background_act.sa_mask));
-	// set up signal handler for completed child process
 	sigaction(SIGSTOP, &background_act, NULL);
 
 	foreground_act.sa_handler = sigintHandler;
