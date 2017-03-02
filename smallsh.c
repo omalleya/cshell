@@ -17,7 +17,7 @@ void parseCommand(char*, int*);
 void checkCommand(char**, int, char*, char*, int*, int);
 void runCommand(char**);
 void changeDirectory(char**, int);
-int executeShell(char**, char*, char*, int);
+int executeShell(char**, char*, char*, int, int);
 void checkBg();
 
 void checkBg()
@@ -58,7 +58,7 @@ void runShell() {
 		parseCommand(command, &exitStatus);
 		checkBg();
 
-	}while(strcmp(command, "exit\n") != 0);
+	}while(1);
 }
 
 void parseCommand(char* command, int* exitStatus)
@@ -170,7 +170,7 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		//comment line so do nothing
 	}else {
 		//exec shell
-		*exitStatus = executeShell(args, inputFile, outputFile, background);
+		*exitStatus = executeShell(args, inputFile, outputFile, numArgs, background);
 	}
 }
 
@@ -199,7 +199,7 @@ void changeDirectory(char** args, int numArgs)
 	}
 }
 
-int executeShell(char** args, char* inputFile, char* outputFile, int background)
+int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, int background)
 {
 	pid_t spawnPid = -5;
 	int childExitStatus = -5;
@@ -253,6 +253,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int background)
 		}
 	}
 
+	int i=0;
 	for(i=0; i<numArgs; i++)
 	{
 		free(args[i]);
