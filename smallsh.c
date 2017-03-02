@@ -344,7 +344,7 @@ int main() {
 	background_act.sa_flags = SA_SIGINFO|SA_RESTART;
 	sigfillset(&(background_act.sa_mask));
 	// set up signal handler for completed child process
-	sigaction(SIGCHLD, &background_act, NULL);
+	sigaction(SIGSTP, &background_act, NULL);
 
 	foreground_act.sa_handler = sigintHandler;
 	foreground_act.sa_flags = SA_RESTART;
