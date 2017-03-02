@@ -326,6 +326,7 @@ void sigintHandler()
     // if interrupt signal occurs while fg process is running, kill it
     if (fgpid != INT_MAX)
     {
+	printf("%d\n", fgpid);	
         // kill the foreground process
         kill(fgpid, SIGKILL);
  
@@ -344,7 +345,7 @@ int main() {
 	background_act.sa_flags = SA_SIGINFO|SA_RESTART;
 	sigfillset(&(background_act.sa_mask));
 	// set up signal handler for completed child process
-	sigaction(SIGSTP, &background_act, NULL);
+	sigaction(SIGSTOP, &background_act, NULL);
 
 	foreground_act.sa_handler = sigintHandler;
 	foreground_act.sa_flags = SA_RESTART;
