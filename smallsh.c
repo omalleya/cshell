@@ -12,7 +12,6 @@
 int signalNum = 0;
 pid_t fgpid = INT_MAX;
 pid_t bgpid[MAX_PIDS];         // array of open background process IDs
-pid_t completed_pid[MAX_PIDS]; // array of completed bg process IDs
 int cur=0;
 int fgOnly = 0;
 
@@ -195,6 +194,11 @@ void parseCommand(char* command, int* exitStatus)
 	checkCommand(args, numArgs, inputFile, outputFile, exitStatus, background);
 	free(inputFile);
 	free(outputFile);
+	for(i=0; i<numArgs; i++)
+	{
+		free(args[i]);
+	}
+	free(args);
 }
 
 void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, int* exitStatus, int background)
@@ -336,12 +340,6 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 		}
 	}
 
-	int i=0;
-	for(i=0; i<numArgs; i++)
-	{
-		free(args[i]);
-	}
-	//free(args);
 	if(WIFEXITED(childExitStatus))
 		return WEXITSTATUS(childExitStatus);
 	return WTERMSIG(childExitStatus);
