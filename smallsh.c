@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <limits.h>
 
-#define MAX_COMMAND_LENGTH 100
+#define MAX_COMMAND_LENGTH 2048
 #define MAX_PIDS         1000 // maximum PIDs to track
 
 int signalNum = 0;
@@ -140,7 +140,7 @@ void parseCommand(char* command, int* exitStatus)
 			strcpy(outputFile,token);
 			outputFile[strcspn(outputFile, "\n")] = 0;
 			
-		}else if(strcmp(token, "&\n")==0)
+		}else if(strcmp(token, "&\n") == 0)
 		{
 			token = strtok(NULL, s);
 			//sets background variable to true
@@ -165,6 +165,13 @@ void parseCommand(char* command, int* exitStatus)
 	{
 		if(token==NULL)
 		{
+			continue;
+		}else if(token[0] == '&')
+		{
+			if(fgOnly == 0)
+			{
+				background=1;
+			}
 			continue;
 		}
 		args[i] = calloc(strlen(token)+1, sizeof(char));
@@ -329,7 +336,8 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 				}
 
 			}else{
-				pid_t childPID = waitpid(childPID, &childExitStatus, WNOHANG);
+				pid_t childPID = INT_MAX;
+				childPID = waitpid(childPID, &childExitStatus, WNOHANG);
 				bgpid[cur++] = childPID;
 				printf("background pid is %d\n", spawnPid);
 				fflush(stdout);
