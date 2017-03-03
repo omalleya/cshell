@@ -293,8 +293,8 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 			{
 				counter++;
 				if (execvp(args[0], args) < 0) {
-					printf("counter: %d\n", counter);
-					perror("execvp failed");
+					//printf("counter: %d\n", counter);
+					perror("error");
 					fflush(stdout);
 					exit(2);
 				} else {
