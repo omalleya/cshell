@@ -69,13 +69,16 @@ void runShell() {
 		printf(": ");
 		fflush(stdout);
 		fflush(stdin);
+		//get command from user
 		fgets(command, MAX_COMMAND_LENGTH, stdin);
 
 		//parses command and then checks command for proper functionality
 		parseCommand(command, &exitStatus);
+		//checks background processes for completion
 		checkBg();
 		free(command);
 		command = malloc(sizeof(char)*MAX_COMMAND_LENGTH);
+		memset(command, '\0', MAX_COMMAND_LENGTH);
 
 	}while(1);
 
@@ -190,6 +193,8 @@ void parseCommand(char* command, int* exitStatus)
 
 
 	checkCommand(args, numArgs, inputFile, outputFile, exitStatus, background);
+	free(inputFile);
+	free(outputFile);
 }
 
 void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, int* exitStatus, int background)
@@ -223,8 +228,6 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		//exec shell
 		*exitStatus = executeShell(args, inputFile, outputFile, numArgs, background);
 	}
-	free(inputFile);
-	free(outputFile);
 }
 
 void changeDirectory(char** args, int numArgs)
@@ -338,7 +341,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 	{
 		free(args[i]);
 	}
-	free(args);
+	//free(args);
 	if(WIFEXITED(childExitStatus))
 		return WEXITSTATUS(childExitStatus);
 	return WTERMSIG(childExitStatus);
