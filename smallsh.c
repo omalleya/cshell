@@ -78,6 +78,8 @@ void runShell() {
 		command = malloc(sizeof(char)*MAX_COMMAND_LENGTH);
 
 	}while(1);
+
+	free(command);
 }
 
 void parseCommand(char* command, int* exitStatus)
@@ -282,18 +284,9 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 				fcntl(targetFD, F_SETFD, FD_CLOEXEC);
 			}
 
-			// if(strcmp(args[0],"")!=0)
-			// {
-			// 	execvp(args[0], args);
-			// 	perror("error");
-			// 	exit(2);
-			// }
-			int counter = 0;
 			if(strcmp(args[0],"")!=0||args[0]==NULL)
 			{
-				counter++;
 				if (execvp(args[0], args) < 0) {
-					//printf("counter: %d\n", counter);
 					perror("error");
 					fflush(stdout);
 					exit(2);
@@ -301,7 +294,6 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 					return execvp(args[0], args);
 				}
 			}
-			counter = 0;
 			break;
 		}
 		default: {
