@@ -278,13 +278,13 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 			}
 
 			execvp(args[0], args);
+			perror("error");
 			exit(2); 
 			break;
 		}
 		default: {
 			if(background == 0)
 			{
-				//pid_t actualPid = waitpid(spawnPid, &childExitStatus, 0);
 				signalNum = 0;
 				fgpid = spawnPid;
 
@@ -323,7 +323,9 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 		free(args[i]);
 	}
 	free(args);
-	return childExitStatus;
+	if(WIFEXITED(childExitStatus))
+		return WEXITSTATUS(childExitStatus);
+	return WTERMSIG(childExitStatus);
 }
 
 void fgHandler()
