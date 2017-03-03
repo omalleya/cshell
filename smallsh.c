@@ -103,7 +103,7 @@ void parseCommand(char* command, int* exitStatus)
 	//replaces $$ with pid
 	for(i=0; i<strlen(command)-1; i++)
 	{
-		if(command[i]=='$'&& command[i+1]=='$')
+		if(command[i]=='$' && command[i+1]=='$')
 		{
 			strncpy(strC,command,i);
 			strC[i] = '\0';
@@ -159,7 +159,7 @@ void parseCommand(char* command, int* exitStatus)
 	free(temp);
 
 	//create args array with size figured out in while loop
-	char **args = (char**) malloc((numArgs)*sizeof(char*));
+	char **args = malloc((numArgs)*sizeof(char*));
 
 	token = strtok(command, s);
 	for(i=0; i<numArgs-1; i++)
@@ -168,7 +168,7 @@ void parseCommand(char* command, int* exitStatus)
 		{
 			continue;
 		}
-		args[i] = malloc(sizeof(char)*strlen(token));
+		args[i] = calloc(strlen(token)+1, sizeof(char));
 		strcpy(args[i], token);
 		//removes new line character
 		args[i][strcspn(args[i], "\n")] = 0;
