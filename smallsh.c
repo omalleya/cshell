@@ -277,9 +277,12 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 				fcntl(targetFD, F_SETFD, FD_CLOEXEC);
 			}
 
-			execvp(args[0], args);
-			perror("error");
-			exit(2); 
+			if(strcmp(args[0],"")!=0)
+			{
+				execvp(args[0], args);
+				perror("error");
+				exit(2);
+			}
 			break;
 		}
 		default: {
