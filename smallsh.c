@@ -180,7 +180,7 @@ void parseCommand(char* command, int* exitStatus)
 		if(token==NULL)
 		{
 			continue;
-		}else if(token[0] == '&')
+		}else if(token[0] == '&' && strcmp(args[0],"echo") != 0)
 		{
 			//double check that we aren't sending & to exec or using it in foreground only mode
 			if(fgOnly == 0)
