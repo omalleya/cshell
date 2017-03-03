@@ -158,7 +158,7 @@ void parseCommand(char* command, int* exitStatus)
 	free(temp);
 
 	//create args array with size figured out in while loop
-	char **args = malloc((numArgs)*sizeof(char*));
+	char **args = calloc(numArgs, sizeof(char*));
 
 	token = strtok(command, s);
 	for(i=0; i<numArgs-1; i++)
