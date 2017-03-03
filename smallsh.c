@@ -88,7 +88,7 @@ void runShell() {
 void parseCommand(char* command, int* exitStatus)
 {
 	const char s[1] = " ";
-	char* token;
+	char* token = NULL;
 	char* inputFile = NULL;
 	char* outputFile = NULL;
 	//set to one to add NULL
@@ -119,7 +119,7 @@ void parseCommand(char* command, int* exitStatus)
 	
 
 	//need to copy command because strtok edits command string
-	char* temp = malloc(sizeof(char)*strlen(command));
+	char* temp = calloc(strlen(command)+1, sizeof(char));
 	strcpy(temp, command);
 
 	token = strtok(temp, s);
@@ -130,14 +130,14 @@ void parseCommand(char* command, int* exitStatus)
 		if(strcmp(token, "<")==0)
 		{
 			token = strtok(NULL, s);
-			inputFile = malloc(sizeof(char)*strlen(token));
+			inputFile = calloc(strlen(token)+1, sizeof(char));
 			strcpy(inputFile,token);
 			inputFile[strcspn(inputFile, "\n")] = 0;
 			
 		}else if(strcmp(token, ">")==0)
 		{
 			token = strtok(NULL, s);
-			outputFile = malloc(sizeof(char)*strlen(token));
+			outputFile = calloc(strlen(token)+1, sizeof(char));
 			strcpy(outputFile,token);
 			outputFile[strcspn(outputFile, "\n")] = 0;
 			
