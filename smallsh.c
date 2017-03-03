@@ -15,11 +15,17 @@ pid_t bgpid[MAX_PIDS];         // array of open background process IDs
 int cur=0;
 int fgOnly = 0;
 
+//runs looping shell
 void runShell();
+//parses user input correctly
 void parseCommand(char*, int*);
+//finds out how to run command
 void checkCommand(char**, int, char*, char*, int*, int);
+//splits off command based on args array
 void runCommand(char**);
+//changes directory
 void changeDirectory(char**, int);
+//executes shell after forking child process
 int executeShell(char**, char*, char*, int, int);
 void checkBg();
 
@@ -46,6 +52,7 @@ void checkBg()
 			//pid has already finished and outputted it's exit status
 		}else if(bgpid[i] != 0)
 		{
+			//pid has just finished so lets print the exit status
 			if(WIFEXITED(childExitStatus))
 				printf("background pid %d is done: exit value %d\n", bgpid[i], WEXITSTATUS(childExitStatus));
 			else if (WIFSIGNALED(childExitStatus))
@@ -106,8 +113,11 @@ void parseCommand(char* command, int* exitStatus)
 		{
 			strncpy(strC,command,i);
 			strC[i] = '\0';
+			//get pid as string
 			n = sprintf(strTemp, "%ld", (long)getpid());
+			//concatenate to command
 			strcat(strC, strTemp);
+			//concatenate rest of command onto string
 			strcat(strC,command+(i+2));
 			printf("%s\n",strC);
 			fflush(stdout);
@@ -128,14 +138,18 @@ void parseCommand(char* command, int* exitStatus)
 	{
 		if(strcmp(token, "<")==0)
 		{
+			//get value after <
 			token = strtok(NULL, s);
+			//set inputFile to that value
 			inputFile = calloc(strlen(token)+1, sizeof(char));
 			strcpy(inputFile,token);
 			inputFile[strcspn(inputFile, "\n")] = 0;
 			
 		}else if(strcmp(token, ">")==0)
 		{
+			//get value after >
 			token = strtok(NULL, s);
+			//set outputFile to that value
 			outputFile = calloc(strlen(token)+1, sizeof(char));
 			strcpy(outputFile,token);
 			outputFile[strcspn(outputFile, "\n")] = 0;
@@ -143,7 +157,7 @@ void parseCommand(char* command, int* exitStatus)
 		}else if(strcmp(token, "&\n") == 0)
 		{
 			token = strtok(NULL, s);
-			//sets background variable to true
+			//sets background variable to true if we're not in foreground only mode
 			if(fgOnly == 0)
 			{
 				background=1;
@@ -168,6 +182,7 @@ void parseCommand(char* command, int* exitStatus)
 			continue;
 		}else if(token[0] == '&')
 		{
+			//double check that we aren't sending & to exec or using it in foreground only mode
 			if(fgOnly == 0)
 			{
 				background=1;
@@ -219,6 +234,7 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 		fflush(stdout);
 	}else if(strcmp(args[0],"exit")==0)
 	{
+		//kill bg processes
 		int i=0;
 		for(i=0; i<cur; i++)
 		{
@@ -227,6 +243,7 @@ void checkCommand(char** args, int numArgs, char* inputFile, char* outputFile, i
 				kill(bgpid[i], SIGKILL);
 			}
 		}
+		//free args variables
 		for(i=0; i<numArgs; i++)
 		{
 			free(args[i]);
@@ -247,6 +264,7 @@ void changeDirectory(char** args, int numArgs)
 
 	if(numArgs > 2)
 	{
+		//change dir in this if clause
 		if(chdir(args[1]) == -1)
 		{
 			printf("Couldn't change directory.\n");
@@ -278,7 +296,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 			break; 
 		}
 		case 0: {
-			//necessary redirection
+			//necessary redirection for input
 			int sourceFD, targetFD, result;
 			if(inputFile!=NULL)
 			{
@@ -288,7 +306,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 				if (result == -1) { perror("source dup2()"); exit(2); }
 				fcntl(sourceFD, F_SETFD, FD_CLOEXEC);
 			}
-
+			//necessary redirection for output
 			if(outputFile!=NULL)
 			{
 				targetFD = open(outputFile, O_WRONLY | O_CREAT | O_TRUNC, 0744);
@@ -298,6 +316,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 				fcntl(targetFD, F_SETFD, FD_CLOEXEC);
 			}
 
+			//call exec in this if clause if proper conditions met
 			if(strcmp(args[0],"")!=0||args[0]==NULL)
 			{
 				if (execvp(args[0], args) < 0) {
@@ -316,19 +335,19 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 				signalNum = 0;
 				fgpid = spawnPid;
 
-				// set interrupt handler for fg process 
+				//set interrupt handler for fg process 
                 sigaction(SIGINT, &foreground_act, NULL);
 
-				// wait for fg child process
+				//wait for fg child process
                 fgpid = waitpid(fgpid, &childExitStatus, 0);
 
-				// restore to ignore interrupts
+				//restore to ignore interrupts
                 sigaction(SIGINT, &restOfTheTime_act, NULL);
 
 				fgpid = INT_MAX;
 
 
-				// if process was terminated by signal, print message
+				//if process was terminated by signal, print message
 				if (signalNum != 0)
 				{
 					printf("terminated by signal %d\n", signalNum);
@@ -338,7 +357,9 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 			}else{
 				pid_t childPID = INT_MAX;
 				childPID = waitpid(childPID, &childExitStatus, WNOHANG);
+				//add this process to bg process list
 				bgpid[cur++] = childPID;
+				//output current pid
 				printf("background pid is %d\n", spawnPid);
 				fflush(stdout);
 			}
@@ -348,6 +369,7 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 		}
 	}
 
+	//return with proper exit status
 	if(WIFEXITED(childExitStatus))
 		return WEXITSTATUS(childExitStatus);
 	return WTERMSIG(childExitStatus);
@@ -356,6 +378,8 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 void fgHandler()
 {
 
+	//if we're not in fg only, print we're entering and set fgOnly to 1
+	//else we're in fg only, print we're exiting and set fgOnly to 0
 	if(fgOnly == 0)
 	{
 		puts("Entering foreground-only mode (& is now ignored)\n");
@@ -372,12 +396,12 @@ void fgHandler()
 
 void sigintHandler()
 {
-    // if interrupt signal occurs while fg process is running, kill it
+    //if interrupt signal occurs while fg process is running, kill it
     if (fgpid != INT_MAX)
     {
         kill(fgpid, SIGKILL);
  
-        // set global variable for status messages
+        //set global variable for status messages
         signalNum = 2;  
     }  
     return;
@@ -385,21 +409,25 @@ void sigintHandler()
 
 int main() {
 
+	//set up fg only mode signal handler
 	stopFg_act.sa_handler = fgHandler;
 	stopFg_act.sa_flags = SA_RESTART;
 	sigfillset(&(stopFg_act.sa_mask));
 	sigaction(SIGTSTP, &stopFg_act, NULL);
 
+	//set up kill fg process signal handler
 	foreground_act.sa_handler = sigintHandler;
 	foreground_act.sa_flags = SA_RESTART;
 	sigfillset(&(foreground_act.sa_mask));
 	sigaction(SIGINT, &foreground_act, NULL); 
 
+	//ignore all other signals signal handler
 	restOfTheTime_act.sa_handler = SIG_IGN;
 	restOfTheTime_act.sa_flags = SA_RESTART;
 	sigfillset(&(restOfTheTime_act.sa_mask));
 	sigaction(SIGINT, &restOfTheTime_act, NULL); 
 
+	//run the shell
 	runShell();	
 	return 0;
 
