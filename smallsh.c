@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <limits.h>
 
-#define MAX_COMMAND_LENGTH 40
+#define MAX_COMMAND_LENGTH 100
 #define MAX_PIDS         1000 // maximum PIDs to track
 
 int signalNum = 0;
@@ -53,6 +53,7 @@ void checkBg()
 				printf("background pid %d is done: terminated by signal %d\n", bgpid[i], WTERMSIG(childExitStatus));
 			else
 				printf("Child did not terminate with exit\n");
+			fflush(stdout);
 
 		}
 	}
@@ -67,11 +68,14 @@ void runShell() {
 	do {
 		printf(": ");
 		fflush(stdout);
+		fflush(stdin);
 		fgets(command, MAX_COMMAND_LENGTH, stdin);
 
 		//parses command and then checks command for proper functionality
 		parseCommand(command, &exitStatus);
 		checkBg();
+		free(command);
+		command = malloc(sizeof(char)*MAX_COMMAND_LENGTH);
 
 	}while(1);
 }
@@ -102,6 +106,7 @@ void parseCommand(char* command, int* exitStatus)
 			strcat(strC, strTemp);
 			strcat(strC,command+(i+2));
 			printf("%s\n",strC);
+			fflush(stdout);
 			strcpy(command, strC);
 		}
 	}
@@ -277,12 +282,26 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 				fcntl(targetFD, F_SETFD, FD_CLOEXEC);
 			}
 
-			if(strcmp(args[0],"")!=0)
+			// if(strcmp(args[0],"")!=0)
+			// {
+			// 	execvp(args[0], args);
+			// 	perror("error");
+			// 	exit(2);
+			// }
+			int counter = 0;
+			if(strcmp(args[0],"")!=0||args[0]==NULL)
 			{
-				execvp(args[0], args);
-				perror("error");
-				exit(2);
+				counter++;
+				if (execvp(args[0], args) < 0) {
+					printf("counter: %d\n", counter);
+					perror("execvp failed");
+					fflush(stdout);
+					exit(2);
+				} else {
+					return execvp(args[0], args);
+				}
 			}
+			counter = 0;
 			break;
 		}
 		default: {
@@ -307,12 +326,14 @@ int executeShell(char** args, char* inputFile, char* outputFile, int numArgs, in
 				if (signalNum != 0)
 				{
 					printf("terminated by signal %d\n", signalNum);
+					fflush(stdout);
 				}
 
 			}else{
 				pid_t childPID = waitpid(childPID, &childExitStatus, WNOHANG);
 				bgpid[cur++] = childPID;
 				printf("background pid is %d\n", spawnPid);
+				fflush(stdout);
 			}
 			break;
 
@@ -353,16 +374,11 @@ void sigintHandler()
     // if interrupt signal occurs while fg process is running, kill it
     if (fgpid != INT_MAX)
     {
-		//printf("%d\n", fgpid);	
-        // kill the foreground process
         kill(fgpid, SIGKILL);
  
         // set global variable for status messages
         signalNum = 2;  
     }  
-
-    // ignore interrupt signal for all other processes
-    // and simply return
     return;
 }
 
